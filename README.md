@@ -2,7 +2,7 @@
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 <center>
-<img src="https://ropensci.github.io/drake/figures/infographic.svg" alt="infographic" align="center" style = "border: none; float: center;">
+<img src="https://docs.ropensci.org/drake/reference/figures/infographic.svg" alt="infographic" align="center" style = "border: none; float: center;">
 </center>
 <table class="table">
 <thead>
@@ -27,7 +27,7 @@ Development
 <a href="https://cran.r-project.org/package=drake"><img src="https://www.r-pkg.org/badges/version/drake" alt="CRAN"></a>
 </td>
 <td align="left">
-<a href="https://travis-ci.org/ropensci/drake"><img src="https://travis-ci.org/ropensci/drake.svg?branch=master" alt="Travis"></a>
+<a href="https://github.com/ropensci/drake/actions?query=workflow%3Acheck"><img src="https://github.com/ropensci/drake/workflows/check/badge.svg" alt="check"></a>
 </td>
 </tr>
 <tr class="even">
@@ -38,7 +38,7 @@ Development
 <a href="https://cran.r-project.org/web/checks/check_results_drake.html"><img src="https://cranchecks.info/badges/summary/drake" alt="cran-checks"></a>
 </td>
 <td align="left">
-<a href="https://ci.appveyor.com/project/ropensci/drake"><img src="https://ci.appveyor.com/api/projects/status/4ypc9xnmqt70j94e?svg=true&amp;branch=master" alt="AppVeyor"></a>
+<a href="https://github.com/ropensci/drake/actions?query=workflow%3Alint"><img src="https://github.com/ropensci/drake/workflows/lint/badge.svg" alt="lint"></a>
 </td>
 </tr>
 <tr class="odd">
@@ -78,7 +78,7 @@ Development
 </table>
 <br>
 
-# The drake R package <img src="https://ropensci.github.io/drake/figures/logo.svg" align="right" alt="logo" width="120" height = "139" style = "border: none; float: right;">
+# The drake R package <img src="https://docs.ropensci.org/drake/reference/figures/logo.svg" align="right" alt="logo" width="120" height = "139" style = "border: none; float: right;">
 
 Data analysis can be slow. A round of scientific computation can take
 several minutes, hours, or even days to complete. After it finishes, if
@@ -87,28 +87,36 @@ valid. How much of that valuable output can you keep, and how much do
 you need to update? How much runtime must you endure all over again?
 
 For projects in R, the `drake` package can help. It [analyzes your
-workflow](https://ropenscilabs.github.io/drake-manual/plans.html), skips
-steps with up-to-date results, and orchestrates the rest with [optional
-distributed
-computing](https://ropenscilabs.github.io/drake-manual/hpc.html). At the
-end, `drake` provides evidence that your results match the underlying
-code and data, which increases your ability to trust your research.
+workflow](https://books.ropensci.org/drake/plans.html), skips steps with
+up-to-date results, and orchestrates the rest with [optional distributed
+computing](https://books.ropensci.org/drake/hpc.html). At the end,
+`drake` provides evidence that your results match the underlying code
+and data, which increases your ability to trust your research.
 
-# 6-minute video
+# Video
 
-Visit the [first page of the
-manual](https://ropenscilabs.github.io/drake-manual/) to watch a short
-introduction.
+## That Feeling of Workflowing
+
+<center>
+<a href="https://www.youtube.com/embed/jU1Zv21GvT4">
+<img src="https://docs.ropensci.org/drake/reference/figures/workflowing.png" alt="workflowing" align="center" style = "border: none; float: center;">
+</a>
+</center>
+
+(By [Miles McBain](https://github.com/MilesMcBain); [venue](https://nyhackr.org/index.html),
+[resources](https://github.com/MilesMcBain/nycr_meetup_talk))
+
+## rOpenSci Community Call
 
 <center>
 
-<a href="https://ropenscilabs.github.io/drake-manual">
-<img src="https://ropensci.github.io/drake/figures/video.png" alt="video" align="center" style = "border: none; float: center;">
+<a href="https://ropensci.org/commcalls/2019-09-24/">
+<img src="https://docs.ropensci.org/drake/reference/figures/commcall.png" alt="commcall" align="center" style = "border: none; float: center;">
 </a>
 
 </center>
 
-<br>
+([resources](https://ropensci.org/commcalls/2019-09-24/))
 
 # What gets done stays done.
 
@@ -120,18 +128,8 @@ loop](https://en.wikipedia.org/wiki/Sisyphus):
 3.  Discover an issue.
 4.  Rerun from scratch.
 
-Ordinarily, it is hard to avoid rerunning the code from scratch.
-<br>
-
-<center>
-
-<img src="https://ropensci.github.io/drake/figures/tweet.png" alt="tweet" align="center" style = "border: none; float: center;">
-
-</center>
-
-<br>
-
-But with `drake`, you can automatically
+For projects with long runtimes, this process gets tedious. But with
+`drake`, you can automatically
 
 1.  Launch the parts that changed since last time.
 2.  Skip the rest.
@@ -144,14 +142,21 @@ To set up a project, load your packages,
 library(drake)
 library(dplyr)
 library(ggplot2)
+library(tidyr)
+#> 
+#> Attaching package: 'tidyr'
+#> The following objects are masked from 'package:drake':
+#> 
+#>     expand, gather
 ```
 
 load your custom functions,
 
 ``` r
 create_plot <- function(data) {
-  ggplot(data, aes(x = Petal.Width, fill = Species)) +
-    geom_histogram()
+  ggplot(data) +
+    geom_histogram(aes(x = Ozone)) +
+    theme_gray(24)
 }
 ```
 
@@ -171,37 +176,39 @@ and plan what you are going to do.
 plan <- drake_plan(
   raw_data = readxl::read_excel(file_in("raw_data.xlsx")),
   data = raw_data %>%
-    mutate(Species = forcats::fct_inorder(Species)),
+    mutate(Ozone = replace_na(Ozone, mean(Ozone, na.rm = TRUE))),
   hist = create_plot(data),
-  fit = lm(Sepal.Width ~ Petal.Width + Species, data),
+  fit = lm(Ozone ~ Wind + Temp, data),
   report = rmarkdown::render(
     knitr_in("report.Rmd"),
     output_file = file_out("report.html"),
     quiet = TRUE
   )
 )
+
 plan
 #> # A tibble: 5 x 2
-#>   target   command                                                         
-#>   <chr>    <expr>                                                          
-#> 1 raw_data readxl::read_excel(file_in("raw_data.xlsx"))                   …
-#> 2 data     raw_data %>% mutate(Species = forcats::fct_inorder(Species))   …
-#> 3 hist     create_plot(data)                                              …
-#> 4 fit      lm(Sepal.Width ~ Petal.Width + Species, data)                  …
-#> 5 report   rmarkdown::render(knitr_in("report.Rmd"), output_file = file_ou…
+#>   target   command                                                              
+#>   <chr>    <expr_lst>                                                           
+#> 1 raw_data readxl::read_excel(file_in("raw_data.xlsx"))                        …
+#> 2 data     raw_data %>% mutate(Ozone = replace_na(Ozone, mean(Ozone, na.rm = TR…
+#> 3 hist     create_plot(data)                                                   …
+#> 4 fit      lm(Ozone ~ Wind + Temp, data)                                       …
+#> 5 report   rmarkdown::render(knitr_in("report.Rmd"), output_file = file_out("re…
 ```
 
-So far, we have just been setting the stage. Use `make()` to do the real
-work. Targets are built in the correct order regardless of the row order
-of `plan`.
+So far, we have just been setting the stage. Use `make()` or
+[`r_make()`](https://books.ropensci.org/drake/projects.html#safer-interactivity)
+to do the real work. Targets are built in the correct order regardless
+of the row order of `plan`.
 
 ``` r
-make(plan)
-#> target raw_data
-#> target data
-#> target fit
-#> target hist
-#> target report
+make(plan) # See also r_make().
+#> ▶ target raw_data
+#> ▶ target data
+#> ▶ target fit
+#> ▶ target hist
+#> ▶ target report
 ```
 
 Except for files like `report.html`, your output is stored in a hidden
@@ -209,20 +216,20 @@ Except for files like `report.html`, your output is stored in a hidden
 
 ``` r
 readd(data) # See also loadd().
-#> # A tibble: 150 x 5
-#>    Sepal.Length Sepal.Width Petal.Length Petal.Width Species
-#>           <dbl>       <dbl>        <dbl>       <dbl> <fct>  
-#>  1          5.1         3.5          1.4         0.2 setosa 
-#>  2          4.9         3            1.4         0.2 setosa 
-#>  3          4.7         3.2          1.3         0.2 setosa 
-#>  4          4.6         3.1          1.5         0.2 setosa 
-#>  5          5           3.6          1.4         0.2 setosa 
-#>  6          5.4         3.9          1.7         0.4 setosa 
-#>  7          4.6         3.4          1.4         0.3 setosa 
-#>  8          5           3.4          1.5         0.2 setosa 
-#>  9          4.4         2.9          1.4         0.2 setosa 
-#> 10          4.9         3.1          1.5         0.1 setosa 
-#> # … with 140 more rows
+#> # A tibble: 153 x 6
+#>    Ozone Solar.R  Wind  Temp Month   Day
+#>    <dbl>   <dbl> <dbl> <dbl> <dbl> <dbl>
+#>  1  41       190   7.4    67     5     1
+#>  2  36       118   8      72     5     2
+#>  3  12       149  12.6    74     5     3
+#>  4  18       313  11.5    62     5     4
+#>  5  42.1      NA  14.3    56     5     5
+#>  6  28        NA  14.9    66     5     6
+#>  7  23       299   8.6    65     5     7
+#>  8  19        99  13.8    59     5     8
+#>  9   8        19  20.1    61     5     9
+#> 10  42.1     194   8.6    69     5    10
+#> # … with 143 more rows
 ```
 
 You may look back on your work and see room for improvement, but it’s
@@ -235,34 +242,34 @@ readd(hist)
 #> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-<img src="https://ropensci.github.io/drake/figures/hist1.png" alt="hist1" align="center" style = "border: none; float: center;" width = "500px">
+![](man/figures/unnamed-chunk-9-1.png)<!-- -->
 
 So let’s fix the plotting function.
 
 ``` r
 create_plot <- function(data) {
-  ggplot(data, aes(x = Petal.Width, fill = Species)) +
-    geom_histogram(binwidth = 0.25) +
-    theme_gray(20)
+  ggplot(data) +
+    geom_histogram(aes(x = Ozone), binwidth = 10) +
+    theme_gray(24)
 }
 ```
 
-`drake` knows which results are affected.
+`drake` knows which results are
+affected.
 
 ``` r
-config <- drake_config(plan)
-vis_drake_graph(config) # Interactive graph: zoom, drag, etc.
+vis_drake_graph(plan) # See also r_vis_drake_graph().
 ```
 
-<img src="https://ropensci.github.io/drake/figures/graph.png" alt="hist1" align="center" style = "border: none; float: center;" width = "600px">
+<img src="https://docs.ropensci.org/drake/reference/figures/graph.png" alt="hist1" align="center" style = "border: none; float: center;" width = "600px">
 
 The next `make()` just builds `hist` and `report.html`. No point in
 wasting time on the data or model.
 
 ``` r
-make(plan)
-#> target hist
-#> target report
+make(plan) # See also r_make().
+#> ▶ target hist
+#> ▶ target report
 ```
 
 ``` r
@@ -270,7 +277,7 @@ loadd(hist)
 hist
 ```
 
-<img src="https://ropensci.github.io/drake/figures/hist2.png" alt="hist1" align="center" style = "border: none; float: center;" width = "500px">
+![](man/figures/unnamed-chunk-13-1.png)<!-- -->
 
 # Reproducibility with confidence
 
@@ -283,10 +290,9 @@ version control with
 But internal consistency is important too. Reproducibility carries the
 promise that your output matches the code and data you say you used.
 With the exception of [non-default
-triggers](https://ropenscilabs.github.io/drake-manual/triggers.html) and
-[hasty
-mode](https://ropenscilabs.github.io/drake-manual/hpc.html#hasty-mode),
-`drake` strives to keep this promise.
+triggers](https://books.ropensci.org/drake/triggers.html) and [hasty
+mode](https://books.ropensci.org/drake/hpc.html#hasty-mode), `drake`
+strives to keep this promise.
 
 ## Evidence
 
@@ -297,17 +303,17 @@ the results without the help of the original author? With `drake`, it is
 quick and easy to find out.
 
 ``` r
-make(plan)
-#> All targets are already up to date.
+make(plan) # See also r_make().
+#> ℹ unloading 1 targets from environment
+#> ✓ All targets are already up to date.
 
-config <- drake_config(plan)
-outdated(config)
+outdated(plan) # See also r_outdated().
 #> character(0)
 ```
 
 With everything already up to date, you have **tangible evidence** of
 reproducibility. Even though you did not re-create the results, you know
-the results are re-creatable. They **faithfully show** what the code is
+the results are recreatable. They **faithfully show** what the code is
 producing. Given the right [package
 environment](https://rstudio.github.io/packrat/) and [system
 configuration](https://stat.ethz.ch/R-manual/R-devel/library/utils/html/sessionInfo.html),
@@ -321,16 +327,45 @@ more confidence. Starting over from scratch is trivially easy.
 ``` r
 clean()    # Remove the original author's results.
 make(plan) # Independently re-create the results from the code and input data.
-#> target raw_data
-#> target data
-#> target fit
-#> target hist
-#> target report
+#> ▶ target raw_data
+#> ▶ target data
+#> ▶ target fit
+#> ▶ target hist
+#> ▶ target report
+```
+
+## Big data efficiency
+
+Select specialized data formats to increase speed and reduce memory
+consumption. In version 7.5.2.9000 and above, the available formats are
+[“fst”](https://github.com/fstpackage/fst) for data frames (example
+below) and “keras” for [Keras](https://keras.rstudio.com/) models
+([example here](https://books.ropensci.org/drake/churn.html#plan)).
+
+``` r
+library(drake)
+n <- 1e8 # Each target is 1.6 GB in memory.
+plan <- drake_plan(
+  data_fst = target(
+    data.frame(x = runif(n), y = runif(n)),
+    format = "fst"
+  ),
+  data_old = data.frame(x = runif(n), y = runif(n))
+)
+make(plan)
+#> target data_fst
+#> target data_old
+build_times(type = "build")
+#> # A tibble: 2 x 4
+#>   target   elapsed              user                 system    
+#>   <chr>    <Duration>           <Duration>           <Duration>
+#> 1 data_fst 13.93s               37.562s              7.954s    
+#> 2 data_old 184s (~3.07 minutes) 177s (~2.95 minutes) 4.157s
 ```
 
 ## History and provenance
 
-As of version 7.5.0, `drake` tracks the history and provenance of your
+As of version 7.5.2, `drake` tracks the history and provenance of your
 targets: what you built, when you built it, how you built it, the
 arguments you used in your function calls, and how to get the data back.
 (Disable with `make(history = FALSE)`)
@@ -338,28 +373,29 @@ arguments you used in your function calls, and how to get the data back.
 ``` r
 history <- drake_history(analyze = TRUE)
 history
-#> # A tibble: 12 x 9
-#>    target  time    hash  exists command    runtime latest quiet output_file
-#>    <chr>   <chr>   <chr> <lgl>  <chr>        <dbl> <lgl>  <lgl> <chr>      
-#>  1 data    2019-0… e580… TRUE   raw_data… 0.002    FALSE  NA    <NA>       
-#>  2 data    2019-0… e580… TRUE   raw_data… 0        TRUE   NA    <NA>       
-#>  3 fit     2019-0… 62a1… TRUE   lm(Sepal… 0.003    FALSE  NA    <NA>       
-#>  4 fit     2019-0… 62a1… TRUE   lm(Sepal… 0.001000 TRUE   NA    <NA>       
-#>  5 hist    2019-0… 10bc… TRUE   create_p… 0.006    FALSE  NA    <NA>       
-#>  6 hist    2019-0… 5252… TRUE   create_p… 0.004    FALSE  NA    <NA>       
-#>  7 hist    2019-0… 00fa… TRUE   create_p… 0.00600  TRUE   NA    <NA>       
-#>  8 raw_da… 2019-0… 6317… TRUE   "readxl:… 0.01     FALSE  NA    <NA>       
-#>  9 raw_da… 2019-0… 6317… TRUE   "readxl:… 0.007    TRUE   NA    <NA>       
-#> 10 report  2019-0… 0064… TRUE   "rmarkdo… 0.647    FALSE  TRUE  report.html
-#> 11 report  2019-0… 0064… TRUE   "rmarkdo… 0.45     FALSE  TRUE  report.html
-#> 12 report  2019-0… 0064… TRUE   "rmarkdo… 0.456    TRUE   TRUE  report.html
+#> # A tibble: 12 x 11
+#>    target current built exists hash  command   seed runtime na.rm quiet
+#>    <chr>  <lgl>   <chr> <lgl>  <chr> <chr>    <int>   <dbl> <lgl> <lgl>
+#>  1 data   TRUE    2020… TRUE   11e2… "raw_d… 1.29e9 0.013   TRUE  NA   
+#>  2 data   TRUE    2020… TRUE   11e2… "raw_d… 1.29e9 0.004   TRUE  NA   
+#>  3 fit    TRUE    2020… TRUE   3c87… "lm(Oz… 1.11e9 0.004   NA    NA   
+#>  4 fit    TRUE    2020… TRUE   3c87… "lm(Oz… 1.11e9 0.00200 NA    NA   
+#>  5 hist   FALSE   2020… TRUE   88ae… "creat… 2.10e8 0.0120  NA    NA   
+#>  6 hist   TRUE    2020… TRUE   0304… "creat… 2.10e8 0.005   NA    NA   
+#>  7 hist   TRUE    2020… TRUE   0304… "creat… 2.10e8 0.007   NA    NA   
+#>  8 raw_d… TRUE    2020… TRUE   855d… "readx… 1.20e9 0.016   NA    NA   
+#>  9 raw_d… TRUE    2020… TRUE   855d… "readx… 1.20e9 0.013   NA    NA   
+#> 10 report TRUE    2020… TRUE   d78a… "rmark… 1.30e9 0.628   NA    TRUE 
+#> 11 report TRUE    2020… TRUE   d78a… "rmark… 1.30e9 0.406   NA    TRUE 
+#> 12 report TRUE    2020… TRUE   d78a… "rmark… 1.30e9 0.375   NA    TRUE 
+#> # … with 1 more variable: output_file <chr>
 ```
 
 Remarks:
 
   - The `quiet` column appears above because one of the `drake_plan()`
     commands has `knit(quiet = TRUE)`.
-  - The `hash` column identifies all the previous the versions of your
+  - The `hash` column identifies all the previous versions of your
     targets. As long as `exists` is `TRUE`, you can recover old data.
   - Advanced: if you use `make(cache_log_file = TRUE)` and put the cache
     log file under version control, you can match the hashes from
@@ -377,7 +413,7 @@ cache$get_value(hash)
 #> `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 ```
 
-<img src="https://ropensci.github.io/drake/figures/hist1.png" alt="hist1" align="center" style = "border: none; float: center;" width = "600px">
+![](man/figures/unnamed-chunk-18-1.png)<!-- -->
 
 ## Independent replication
 
@@ -394,21 +430,21 @@ could potentially improve the integrity of independent replication.
 Ideally, independent observers should be able to read your code and
 understand it. `drake` helps in several ways.
 
-  - The [workflow plan data
-    frame](https://ropensci.github.io/drake/reference/drake_plan.html)
+  - The [drake
+    plan](https://docs.ropensci.org/drake/reference/drake_plan.html)
     explicitly outlines the steps of the analysis, and
-    [`vis_drake_graph()`](https://ropensci.github.io/drake/reference/vis_drake_graph.html)
+    [`vis_drake_graph()`](https://docs.ropensci.org/drake/reference/vis_drake_graph.html)
     visualizes how those steps depend on each other.
   - `drake` takes care of the parallel scheduling and high-performance
     computing (HPC) for you. That means the HPC code is no longer
     tangled up with the code that actually expresses your ideas.
   - You can [generate large collections of
-    targets](https://ropenscilabs.github.io/drake-manual/mtcars.html#generate-the-workflow-plan)
-    without necessarily changing your code base of imported functions,
-    another nice separation between the concepts and the execution of
-    your workflow
+    targets](https://books.ropensci.org/drake/gsp.html) without
+    necessarily changing your code base of imported functions, another
+    nice separation between the concepts and the execution of your
+    workflow
 
-# Aggressively scale up.
+# Scale up and out.
 
 Not every project can complete in a single R session on your laptop.
 Some projects need more speed or computing power. Some require a few
@@ -417,8 +453,8 @@ systems. But parallel computing is hard. Your tables and figures depend
 on your analysis results, and your analyses depend on your datasets, so
 some tasks must finish before others even begin. `drake` knows what to
 do. Parallelism is implicit and automatic. See the [high-performance
-computing guide](https://ropenscilabs.github.io/drake-manual/hpc.html)
-for all the details.
+computing guide](https://books.ropensci.org/drake/hpc.html) for all the
+details.
 
 ``` r
 # Use the spare cores on your local machine.
@@ -433,12 +469,36 @@ options(
 make(plan, parallelism = "clustermq", jobs = 4)
 ```
 
+# With Docker
+
+`drake` and Docker are compatible and complementary. Here are some
+examples that run `drake` inside a Docker
+    image.
+
+  - [`drake-gitlab-docker-example`](https://gitlab.com/ecohealthalliance/drake-gitlab-docker-example):
+    A small pedagogical example workflow that leverages `drake`, Docker,
+    GitLab, and continuous integration in a reproducible analysis
+    pipeline. Created by [Noam Ross](https://www.noamross.net/).
+  - [`pleurosoriopsis`](https://github.com/joelnitta/pleurosoriopsis):
+    The workflow that supports [Ebihara *et al.* 2019. “Growth Dynamics
+    of the Independent Gametophytes of *Pleurorosiopsis makinoi*
+    (Polypodiaceae)” *Bulletin of the National Science Museum Series B
+    (Botany)*
+    45:77-86.](https://www.kahaku.go.jp/research/publication/botany.html).
+    Created by [Joel Nitta](https://github.com/joelnitta).
+
+Alternatively, it is possible to run `drake` outside Docker and use the
+[`future`](https://github.com/HenrikBengtsson/future) package to send
+targets to a Docker image. `drake`’s
+[`Docker-psock`](https://github.com/wlandau/drake-examples/tree/master/Docker-psock)
+example demonstrates how. Download the code with
+`drake_example("Docker-psock")`.
+
 # Installation
 
 You can choose among different versions of `drake`. The CRAN release
-often lags behind the [online
-manual](https://ropenscilabs.github.io/drake-manual/) but may have fewer
-bugs.
+often lags behind the [online manual](https://books.ropensci.org/drake/)
+but may have fewer bugs.
 
 ``` r
 # Install the latest stable release from CRAN.
@@ -453,8 +513,8 @@ install_github("ropensci/drake")
 # Function reference
 
 The [reference
-section](https://ropensci.github.io/drake/reference/index.html) lists
-all the available functions. Here are the most important ones.
+section](https://docs.ropensci.org/drake/reference/index.html) lists all
+the available functions. Here are the most important ones.
 
   - `drake_plan()`: create a workflow data frame (like `my_plan`).
   - `make()`: build your project.
@@ -466,24 +526,26 @@ all the available functions. Here are the most important ones.
     reproducible than `make()`.
   - `loadd()`: load one or more built targets into your R session.
   - `readd()`: read and return a built target.
-  - `drake_config()`: create a master configuration list for other
-    user-side functions.
   - `vis_drake_graph()`: show an interactive visual network
     representation of your workflow.
+  - `recoverable()`: Which targets can we salvage using `make(recover =
+    TRUE)` (experimental).
   - `outdated()`: see which targets will be built in the next `make()`.
-  - `deps()`: check the dependencies of a command or function.
-  - `failed()`: list the targets that failed to build in the last
+  - `deps_code()`: check the dependencies of a command or function.
+  - `drake_failed()`: list the targets that failed to build in the last
     `make()`.
   - `diagnose()`: return the full context of a build, including errors,
     warnings, and messages.
 
 # Documentation
 
-  - The [user manual](https://ropenscilabs.github.io/drake-manual/)
-  - The [reference website](https://ropensci.github.io/drake/).
-  - The [official repository of example
-    code](https://github.com/wlandau/drake-examples). Download an
-    example workflow from here with `drake_example()`.
+## Core concepts
+
+The following resources explain what `drake` can do and how it works.
+The [`learndrake`](https://github.com/wlandau/learndrake) workshop
+devotes particular attention to `drake`’s mental model.
+
+  - The [user manual](https://books.ropensci.org/drake/)
   - [`drakeplanner`](https://github.com/wlandau/drakeplanner), an
     R/Shiny app to help learn `drake` and create new projects. Run
     locally with `drakeplanner::drakeplanner()` or access it at
@@ -494,6 +556,28 @@ all the available functions. Here are the most important ones.
     See the
     [README](https://github.com/wlandau/learndrake/blob/master/README.md)
     for instructions and links.
+
+## In practice
+
+  - [Miles McBain](https://github.com/MilesMcBain)’s [excellent blog
+    post](https://milesmcbain.xyz/the-drake-post/) explains the
+    motivating factors and practical issues {drake} solves for most
+    projects, how to set up a project as quickly and painlessly as
+    possible, and how to overcome common obstacles.
+  - Miles’ [`dflow`](https://github.com/MilesMcBain/dflow) package
+    generates the file structure for a boilerplate `drake` project. It
+    is a more thorough alternative to `drake::use_drake()`.
+  - `drake` is heavily function-oriented by design, and Miles’
+    [`fnmate`](https://github.com/MilesMcBain/fnmate) package
+    automatically generates boilerplate code and docstrings for
+    functions you mention in `drake` plans.
+
+## Reference
+
+  - The [reference website](https://docs.ropensci.org/drake/).
+  - The [official repository of example
+    code](https://github.com/wlandau/drake-examples). Download an
+    example workflow from here with `drake_example()`.
   - Presentations and workshops by [Will
     Landau](https://github.com/wlandau), [Kirill
     Müller](https://github.com/krlmlr), [Amanda
@@ -501,19 +585,21 @@ all the available functions. Here are the most important ones.
     Ram](http://github.com/karthik), [Sina
     Rüeger](https://github.com/sinarueeger), [Christine
     Stawitz](https://github.com/cstawitz), and others. See specific
-    links at
-    <https://ropenscilabs.github.io/drake-manual/index.html#presentations>
-  - The [FAQ
-    page](https://ropenscilabs.github.io/drake-manual/faq.html), which
+    links at <https://books.ropensci.org/drake/index.html#presentations>
+  - The [FAQ page](https://books.ropensci.org/drake/faq.html), which
     links to [appropriately-labeled issues on
     GitHub](https://github.com/ropensci/drake/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3A%22frequently+asked+question%22+).
 
 ## Use cases
 
-The official [rOpenSci use cases](https://ropensci.org/usecases/) and
-[associated discussion threads](https://discuss.ropensci.org/c/usecases)
-describe applications of `drake` in action. Here are some more
-applications of `drake` in real-world
+The official [rOpenSci use
+cases](https://discuss.ropensci.org/c/usecases) and [associated
+discussion threads](https://discuss.ropensci.org/c/usecases) describe
+applications of `drake` in the real world. Many of these use cases are
+linked from the [`drake` tag on the rOpenSci discussion
+forum](https://discuss.ropensci.org/tag/drake).
+
+Here are some additional applications of `drake` in real-world
     projects.
 
   - [efcaguab/demografia-del-voto](https://github.com/efcaguab/demografia-del-voto)
@@ -524,16 +610,25 @@ applications of `drake` in real-world
   - [sol-eng/tensorflow-w-r](https://github.com/sol-eng/tensorflow-w-r)
   - [tiernanmartin/home-and-hope](https://github.com/tiernanmartin/home-and-hope)
 
+## `drake` projects as R packages
+
+Some folks like to structure their `drake` workflows as R packages.
+Examples are below. In your own analysis packages, be sure to call
+`drake::expose_imports(yourPackage)` so `drake` can watch you package’s
+functions for changes and rebuild downstream targets
+    accordingly.
+
+  - [b-rodrigues/coolmlproject](https://github.com/b-rodrigues/coolmlproject)
+  - [tiernanmartin/drakepkg](https://github.com/tiernanmartin/drakepkg)
+
 # Help and troubleshooting
 
 The following resources document many known issues and challenges.
 
   - [Frequently-asked
-    questions](https://github.com/ropensci/drake/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3A%22frequently+asked+question%22+).
-  - [Cautionary notes and edge
-    cases](https://ropenscilabs.github.io/drake-manual/caution.html)
+    questions](https://github.com/ropensci/drake/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3A%22type:+faq%22+).
   - [Debugging and testing drake
-    projects](https://ropenscilabs.github.io/drake-manual/debug.html)
+    projects](https://books.ropensci.org/drake/debugging.html)
   - [Other known issues](https://github.com/ropensci/drake/issues)
     (please search both open and closed ones).
 
@@ -602,7 +697,7 @@ language-agnostic, `drake` is fundamentally designed for R.
   - Instead of a
     [Makefile](https://github.com/kbroman/preCCProbPaper/blob/master/Makefile),
     `drake` supports an R-friendly [domain-specific
-    language](https://ropenscilabs.github.io/drake-manual/plans.html#large-plans)
+    language](https://books.ropensci.org/drake/plans.html#large-plans)
     for declaring targets.
   - Targets in [GNU Make](https://www.gnu.org/software/make/) are files,
     whereas targets in `drake` are arbitrary variables in memory.
@@ -616,7 +711,7 @@ language-agnostic, `drake` is fundamentally designed for R.
 [remake](https://github.com/richfitz/remake) itself is no longer
 maintained, but its founding design goals and principles live on through
 [drake](https://github.com/ropensci/drake). In fact,
-[drake](https://github.com/ropensci/drake) is a direct reimagining of
+[drake](https://github.com/ropensci/drake) is a direct re-imagining of
 [remake](https://github.com/richfitz/remake) with enhanced scalability,
 reproducibility, high-performance computing, visualization, and
 documentation.
@@ -634,7 +729,7 @@ toolkits](https://github.com/pditommaso/awesome-pipeline). The `drake`
 package distinguishes itself with its R-focused approach,
 Tidyverse-friendly interface, and a [thorough selection of parallel
 computing technologies and scheduling
-algorithms](https://ropenscilabs.github.io/drake-manual/hpc.html).
+algorithms](https://books.ropensci.org/drake/hpc.html).
 
 ## Memoization
 
@@ -681,9 +776,8 @@ they should do as little computation as possible.
 
 To insert a [knitr](https://yihui.name/knitr/) report in a `drake`
 pipeline, use the `knitr_in()` function inside your [`drake`
-plan](https://ropenscilabs.github.io/drake-manual/plans.html), and use
-`loadd()` and `readd()` to refer to targets in the report itself. See an
-[example
+plan](https://books.ropensci.org/drake/plans.html), and use `loadd()`
+and `readd()` to refer to targets in the report itself. See an [example
 here](https://github.com/wlandau/drake-examples/tree/master/main).
 
 ### Version control
@@ -721,9 +815,8 @@ reproducibility is all about transparency, communication, and
 discoverability. For an example of
 [`workflowr`](https://github.com/jdblischak/workflowr) and `drake`
 working together, see [this machine learning
-project](https://2019-feature-selection.pjs-web.de/report-defoliation.html)
-by [Patrick Schratz](https://github.com/pat-s)
-([source](https://github.com/pat-s/2019-feature-selection)).
+project](https://github.com/pat-s/2019-feature-selection) by [Patrick
+Schratz](https://github.com/pat-s).
 
 # Acknowledgements
 
@@ -752,6 +845,6 @@ early in development.
   - [Michael Schubert](https://github.com/mschubert)
 
 Credit for images is [attributed
-here](https://ropensci.github.io/drake/figures/image-credit.md).
+here](https://github.com/ropensci/drake/blob/master/man/figures/image-credit.md).
 
 [![ropensci\_footer](https://ropensci.org/public_images/github_footer.png)](https://ropensci.org)

@@ -1,17 +1,19 @@
 ---
 name: Bug
-about: drake produced an error, failure, or otherwise unexpected result.
+about: Something is wrong with drake.
 title: ''
 labels: 'type: bug'
 assignees: wlandau
-
 ---
 
 ## Prework
 
-- [ ] Read and abide by `drake`'s [code of conduct](https://github.com/ropensci/drake/blob/master/CODE_OF_CONDUCT.md).
-- [ ] Search for duplicates among the [existing issues](https://github.com/ropensci/drake/issues), both open and closed.
-- [ ] Advanced users: verify that the bug still persists in the current development version (i.e. `remotes::install_github("ropensci/drake")`) and mention the [SHA-1 hash](https://git-scm.com/book/en/v1/Getting-Started-Git-Basics#Git-Has-Integrity) of the [Git commit you install](https://github.com/ropensci/drake/commits/master).
+* [ ] Read and agree to the [code of conduct](https://github.com/ropensci/drake/blob/master/CODE_OF_CONDUCT.md) and [contributing guidelines](https://github.com/ropensci/drake/blob/master/CONTRIBUTING.md).
+* [ ] If there is [already a relevant issue](https://github.com/ropensci/drake/issues), whether open or closed, comment on the existing thread instead of posting a new issue.
+* [ ] Post a [minimal reproducible example](https://www.tidyverse.org/help/) so the maintainer can troubleshoot the problems you identify. A reproducible example is:
+    * [ ] **Runnable**: post enough R code and data so any onlooker can create the error on their own computer.
+    * [ ] **Minimal**: reduce runtime wherever possible and remove complicated details that are irrelevant to the issue at hand.
+    * [ ] **Readable**: format your code according to the [tidyverse style guide](https://style.tidyverse.org/).
 
 ## Description
 
@@ -19,12 +21,15 @@ Describe the bug clearly and concisely.
 
 ## Reproducible example
 
-Provide a minimal reproducible example with code and output that demonstrates the bug. The [`reprex`](https://github.com/tidyverse/reprex) package is extremely helpful for this.
+* [ ] Post a [minimal reproducible example](https://www.tidyverse.org/help/) so the maintainer can troubleshoot the problems you identify. A reproducible example is:
+    * [ ] **Runnable**: post enough R code and data so any onlooker can create the error on their own computer.
+    * [ ] **Minimal**: reduce runtime wherever possible and remove complicated details that are irrelevant to the issue at hand.
+    * [ ] **Readable**: format your code according to the [tidyverse style guide](https://style.tidyverse.org/).
+
+## Expected result
+
+What should have happened? Please be as specific as possible.
 
 ## Session info
 
 End the reproducible example with a call to `sessionInfo()` in the same session (e.g. `reprex(si = TRUE)`) and include the output.
-
-## Expected output
-
-What output would the correct behavior have produced?

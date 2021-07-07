@@ -9,9 +9,12 @@ assignees: wlandau
 
 ## Prework
 
-- [ ] Read and abide by `drake`'s [code of conduct](https://github.com/ropensci/drake/blob/master/CODE_OF_CONDUCT.md).
-- [ ] Search for duplicates among the [existing issues](https://github.com/ropensci/drake/issues), both open and closed.
-- [ ] Advanced users: verify that the bottleneck still persists in the current development version (i.e. `remotes::install_github("ropensci/drake")`) and mention the [SHA-1 hash](https://git-scm.com/book/en/v1/Getting-Started-Git-Basics#Git-Has-Integrity) of the [Git commit you install](https://github.com/ropensci/drake/commits/master).
+* [ ] Read and agree to the [code of conduct](https://github.com/ropensci/drake/blob/master/CODE_OF_CONDUCT.md) and [contributing guidelines](https://github.com/ropensci/drake/blob/master/CONTRIBUTING.md).
+* [ ] If there is [already a relevant issue](https://github.com/ropensci/drake/issues), whether open or closed, comment on the existing thread instead of posting a new issue.
+* [ ] Post a [minimal reproducible example](https://www.tidyverse.org/help/) so the maintainer can troubleshoot the problems you identify. A reproducible example is:
+    * [ ] **Runnable**: post enough R code and data so any onlooker can create the error on their own computer.
+    * [ ] **Minimal**: reduce runtime wherever possible and remove complicated details that are irrelevant to the issue at hand.
+    * [ ] **Readable**: format your code according to the [tidyverse style guide](https://style.tidyverse.org/).
 
 ## Description
 
@@ -19,13 +22,28 @@ Describe the bottleneck clearly and concisely.
 
 ## Reproducible example
 
-Provide a minimal example with code that reproduces the problem.
+* [ ] Post a [minimal reproducible example](https://www.tidyverse.org/help/) so the maintainer can troubleshoot the problems you identify. A reproducible example is:
+    * [ ] **Runnable**: post enough R code and data so any onlooker can create the error on their own computer.
+    * [ ] **Minimal**: reduce runtime wherever possible and remove complicated details that are irrelevant to the issue at hand.
+    * [ ] **Readable**: format your code according to the [tidyverse style guide](https://style.tidyverse.org/).
 
 ## Benchmarks
 
-How poorly does `drake` perform? Please share benchmarks: runtimes, memory consumption, [flame graphs](https://github.com/ropensci/drake/issues/647#issuecomment-451760866), etc. Tools to consider:
+How poorly does `drake` perform? To find out, we recommend the [`proffer`](https://github.com/wlandau/proffer) package and take screenshots of the results displayed in your browser.
 
-- In development `drake`, `make(console_log_file = "log.txt")` now prepends sub-second time stamps to each line of `log.txt`. It is a super convenient way to see how fast things are going.
--  [`Rprof()`](https://stat.ethz.ch/R-manual/R-devel/library/utils/html/Rprof.html), [`jointprof`](https://github.com/r-prof/jointprof), [`profile`](https://github.com/r-prof/profile), and [`pprof`](https://github.com/google/pprof). [Example here](https://github.com/wlandau/drake-examples/tree/master/overhead).
-- [`profvis`](https://github.com/rstudio/profvis), though beware https://github.com/rstudio/profvis/issues/104.
-- [`microbenchmark`](https://github.com/joshuaulrich/microbenchmark) and [`bench`](https://github.com/r-lib/bench).
+```r
+library(drake)
+library(proffer)
+px <- pprof({
+  # All your drake code goes here.
+})
+```
+
+Alternatively, if installing [`proffer`](https://github.com/wlandau/proffer) is too cumbersome, create a zip archive of profiling data (e.g. `samples.zip` below) and upload it to this issue thread.
+
+```r
+Rprof(filename = "samples.rprof")
+# Slow code goes here.
+Rprof(NULL)
+zip(zipfile = "samples.zip", files = "samples.rprof")
+```

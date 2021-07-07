@@ -1,0 +1,13 @@
+# https://github.com/probot/stale
+daysUntilStale: 14
+daysUntilClose: 7
+onlyLabels:
+  - "type: question"
+  - "type: trouble"
+staleLabels: "status: stale"
+closeComment: >
+  This issue has been closed due to inactivity.
+  Inactive questions and complaints are unlikely to influence
+  the development of drake, so an automatic process closes them.
+  However, we still encourage you to comment, discuss, and ask questions
+  below just as if the issue were still open.

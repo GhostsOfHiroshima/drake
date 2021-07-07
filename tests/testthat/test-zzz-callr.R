@@ -1,9 +1,17 @@
 drake_context("callr")
 
+test_with_dir("r_make_message", {
+  skip_on_cran()
+  expect_message(r_make_message(force = TRUE))
+})
+
 test_with_dir("config file missing", {
   skip_on_cran()
   skip_if_not_installed("callr")
-  expect_error(r_make(r_args = list(show = FALSE)), "need an R script file")
+  expect_error(
+    r_make(r_args = list(show = FALSE)),
+    "file _drake.R does not exist"
+  )
 })
 
 test_with_dir("basic functions with default _drake.R file", {
@@ -22,20 +30,25 @@ test_with_dir("basic functions with default _drake.R file", {
     default_drake_source
   )
   expect_true(length(r_outdated(r_args = list(show = FALSE))) > 1)
+  expect_true(length(r_recoverable(r_args = list(show = FALSE))) == 0L)
   expect_equal(r_missed(r_args = list(show = FALSE)), character(0))
   deps <- r_deps_target(regression1_small, r_args = list(show = FALSE))
   expect_equal(sort(deps$name), sort(c("reg1", "small")))
   expect_equal(unique(deps$type), "globals")
   r_make(r_args = list(show = FALSE))
-  expect_true(nrow(progress()) > 0L)
+  expect_true(nrow(drake_progress()) > 0L)
   expect_true(is.data.frame(readd(small)))
   expect_equal(r_outdated(r_args = list(show = FALSE)), character(0))
   expect_true(
     is.data.frame(r_drake_build(small, r_args = list(show = FALSE)))
   )
   skip_if_not_installed("visNetwork")
-  info <- r_drake_graph_info(r_args = list(show = FALSE))
+  info <- r_drake_graph_info(
+    r_args = list(show = FALSE),
+    build_times = "none"
+  )
   expect_true(all(c("nodes", "edges") %in% names(info)))
+  skip_if_not_installed("lubridate")
   out <- r_predict_workers(r_args = list(show = FALSE))
   expect_equal(sort(colnames(out)), c("target", "worker"))
   skip_if_not_installed("lubridate")
@@ -101,7 +114,7 @@ test_with_dir("supply the source explicitly", {
     c(
       "library(drake)",
       "load_mtcars_example()",
-      "drake_config(my_plan, console_log_file = \"log.txt\")"
+      "drake_config(my_plan, log_make = \"log.txt\")"
     ),
     "my_script.R"
   )
@@ -134,7 +147,7 @@ test_with_dir("r_make() loads packages and sets options", {
       "library(abind)",
       "options(drake_abind_opt = 2L)",
       "plan <- drake_plan(x = abind(1L, getOption(\"drake_abind_opt\")))",
-      "drake_config(plan, console_log_file = \"log.txt\")"
+      "drake_config(plan, log_make = \"log.txt\")"
     ),
     default_drake_source
   )
@@ -168,6 +181,7 @@ test_with_dir("configuring a background callr process", {
   expect_true(file.exists("stdout.log"))
   expect_true(is.data.frame(readd(small)))
   expect_equal(r_outdated(r_args = list(show = FALSE)), character(0))
+  px$kill()
 })
 
 test_with_dir("callr RStudio addins", {
@@ -189,7 +203,44 @@ test_with_dir("callr RStudio addins", {
   expect_true(length(rs_addin_r_outdated(r_args, .print = FALSE)) > 1)
   rs_addin_r_make(r_args)
   expect_equal(rs_addin_r_outdated(r_args, .print = FALSE), character(0))
+  skip_if_not_installed("lubridate")
   skip_if_not_installed("visNetwork")
   graph <- rs_addin_r_vis_drake_graph(r_args, .print = FALSE)
   expect_true(inherits(graph, "visNetwork"))
+})
+
+test_with_dir("errors keep their informative messages (#969)", {
+  skip_on_cran()
+  skip_if_not_installed("callr")
+  code <- c(
+    "library(drake)",
+    "my_plan <- drake_plan(",
+    "  x = stop('7a3f077af6c8e425')",
+    ")",
+    "drake_config(my_plan)"
+  )
+  writeLines(code, "_drake.R")
+  expect_error(
+    r_make(r_args = list(show = FALSE)),
+    regexp = "7a3f077af6c8e425",
+    class = "callr_error"
+  )
+})
+
+test_with_dir("drake_script() can generate an example script", {
+  drake_script()
+  expect_true(length(readLines("_drake.R")) > 0L)
+})
+
+test_with_dir("drake_script() can generate a single symbol", {
+  drake_script(x)
+  expect_equal(readLines("_drake.R"), "x")
+})
+
+test_with_dir("drake_script() can generate multiple lines", {
+  drake_script({
+    x
+    y
+  })
+  expect_equal(readLines("_drake.R"), c("x", "y"))
 })
